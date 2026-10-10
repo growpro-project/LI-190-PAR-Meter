@@ -1,0 +1,44 @@
+{
+  "SSID": "--",
+  "PASS": "--",
+  "MQTTSERVER": "--",
+  "MQTTUser": "",
+  "MQTTPass": "",
+  "TopicSTATUS": "licor/status",
+  "MQTTIntervalSeconds": 10,
+  "MQTTRetainStatus": false,
+  "ShowIrradiance": false,
+  "ShowDLI": false,
+  "DLILightHours": 12,
+  "PpfdCorrectionFactor": 1.0,
+  "HostName": "LI-COR",
+  "Sensor": {
+    "Model": "LI-190SA",
+    "Serial": "--",
+    "ActiveCalibration": "certificate",
+    "ShuntResistanceOhms": 603.0,
+    "MultiplierUmolPerUa": 169.2,
+    "VoltageMultiplierUmolPerMv": 280.5970,
+    "DifferentialPolarity": 1,
+    "DarkOffsetMv": 0.0,
+    "SampleCount": 16,
+    "SampleIntervalMs": 1000,
+    "WPerM2PerUmol": 0.4867
+  },
+  "FactoryCalibration": {
+    "MultiplierUmolPerUa": 169.2,
+    "DarkOffsetMv": 0.0,
+    "CalibrationDate": "2004-03-02"
+  },
+  "FieldAdjustments": [],
+  "LastFieldAdjustment": {
+    "Available": false,
+    "Id": "",
+    "ReferencePpfd": 0.0,
+    "VoltageMultiplierUmolPerMv": 0.0,
+    "DarkOffsetMv": 0.0,
+    "Date": "",
+    "ShuntResistanceOhms": 603.0,
+    "MultiplierUmolPerUa": 169.2
+  }
+}

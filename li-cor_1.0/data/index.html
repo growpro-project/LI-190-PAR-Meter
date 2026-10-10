@@ -1,0 +1,1176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="format-detection" content="telephone=no">
+  <meta name="theme-color" content="#000000">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <link rel="manifest" href="manifest.json">
+  <title>LI-COR Quantum Sensor</title>
+  <link rel="icon" type="image/png" href="favicon.png">
+  <link rel="apple-touch-icon" href="favicon.png">
+  <style>
+    @font-face {
+      font-family: "New Science";
+      src: url("fonts/New_Science_Regular.otf") format("opentype");
+      font-weight: 400;
+      font-style: normal;
+      font-display: swap;
+    }
+    @font-face {
+      font-family: "New Science";
+      src: url("fonts/New_Science_Bold.otf?v=3") format("opentype");
+      font-weight: 700;
+      font-style: normal;
+      font-display: swap;
+    }
+    @font-face {
+      font-family: "Seven Segment";
+      src: url("fonts/Seven_Segment.ttf") format("opentype");
+      font-weight: 700;
+      font-style: normal;
+      font-display: swap;
+    }
+
+    :root {
+      --bg: #102c52;
+      --bg-deep: #09213f;
+      --black: #000000;
+      --panel: #14365f;
+      --measurement-panel: #000000;
+      --measurement-value: #01f901;
+      --measurement-unit: #8eb6d2;
+/*
+      --measurement-panel: #09213f;
+      --measurement-value: #f4fbff;
+*/
+      --panel-soft: #19416f;
+      --border: #254365;
+      --text: #cfe9fa;
+      --muted: #8eb6d2;
+      --bright: #f4fbff;
+      --blue: #0069b4;
+      --blue-light: #65c4ff;
+      --green: #01f901;
+      --warning: #fcfc00;
+      --danger: #ff0500;
+      --radius: 7px;
+    }
+
+    * { box-sizing: border-box; }
+    *::-webkit-scrollbar { width: 0; height: 0; }
+
+    html, body {
+      margin: 0;
+      min-height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: "New Science", Arial, sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    body { padding-bottom: 68px; }
+
+    button, input, select { font: inherit; }
+    button { cursor: pointer; }
+
+    .app {
+      width: min(100%, 760px);
+      margin: 0 auto;
+      min-height: 100vh;
+      background: var(--bg);
+    }
+
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 5;
+      min-height: 54px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 7px 18px;
+      background: var(--black);
+      border: 0;
+    }
+
+    .logo { width: 130px; height: auto; display: block; filter: brightness(0) invert(1); }
+    .header-meta { display: flex; align-items: center; gap: 14px; text-align: right; }
+    .device-name { color: var(--bright); font-size: 13px; letter-spacing: 0.04em; }
+    .serial { color: var(--muted); font-size: 11px; margin-top: 2px; }
+
+    .status-dot {
+      width: 9px;
+      height: 9px;
+      display: inline-block;
+      border-radius: 50%;
+      background: var(--green);
+      box-shadow: 0 0 0 3px rgba(1, 249, 1, 0.12);
+    }
+    .status-dot.offline { background: var(--danger); box-shadow: 0 0 0 3px rgba(239, 83, 80, 0.12); }
+
+    main { padding: 20px 16px 28px; background: var(--bg); }
+    .tab { display: none; }
+    .tab.active { display: block; }
+    h1.page-title { margin: 0 0 16px; color: var(--bright); font-family: "New Science", Arial, sans-serif !important; font-size: 18px; font-weight: 700 !important; letter-spacing: 0.1em; text-transform: uppercase; }
+    .page-subtitle { margin: -8px 0 18px; color: var(--muted); font-size: 12px; line-height: 1.5; }
+
+    .card {
+      margin: 0 0 13px;
+      padding: 16px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+    }
+    .card h2, .card h3 { margin: 0; color: var(--bright); font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase; }
+    .card h3 { color: var(--blue-light); font-size: 11px; }
+    .card-heading { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 14px; }
+    .sensor-config-heading .small { white-space: nowrap; }
+    .sensor-config-heading .small { flex-shrink: 0; }
+    .muted { color: var(--muted); }
+    .small { font-size: 11px; }
+
+    .measurement-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+    .measurement {
+      min-height: 100px;
+      padding: 13px;
+      background: var(--measurement-panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+    }
+    .measurement-label { color: var(--muted); font-size: 11px; line-height: 1.3; }
+    .measurement-value {
+      margin-top: 10px;
+      color: var(--measurement-value);
+      /*      font-size: clamp(24px, 6vw, 34px);*/
+      font-size: 34px;
+      line-height: 1;
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+      font-family: "Seven Segment", Arial, sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+    .measurement-unit {
+      margin-top: 8px;
+      color: var(--measurement-unit);
+      font-size: 11px;
+      text-align: right;
+    }
+    .measurement.primary .measurement-value { color: var(--measurement-value); }
+    .measurement-grid.single-ppfd { grid-template-columns: 1fr; }
+    .measurement-grid.single-ppfd .measurement.primary .measurement-value { font-size: clamp(48px, 12vw, 68px); }
+    .measurement-grid.single-ppfd .measurement.primary { min-height: 100px; }
+    #dash-measurement-grid.dash-stack { grid-template-columns: 1fr; }
+    #dash-measurement-grid.dash-stack .measurement.primary { grid-column: 1; }
+    #dash-measurement-grid.dash-stack .measurement.primary .measurement-value { font-size: clamp(48px, 12vw, 68px); }
+    #dash-measurement-grid.dash-stack .measurement:not(.primary) { min-height: 100px; }
+    #dash-measurement-grid.dli-layout { grid-template-columns: 1fr; }
+    #dash-measurement-grid.dli-layout .measurement.primary { grid-column: 1 / -1; }
+    #dash-measurement-grid.dli-layout #dash-dli { grid-column: 1 / -1; }
+    #cal-measurement-grid.single-ppfd { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    #cal-measurement-grid.single-ppfd .measurement.primary { grid-column: 1 / -1; }
+
+    .info-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 18px; }
+    .info-item { padding: 8px 0; border-bottom: 1px solid rgba(159, 210, 242, 0.14); }
+    .info-label { color: var(--muted); font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; }
+    .info-value { margin-top: 5px; color: var(--bright); font-size: 13px; font-variant-numeric: tabular-nums; }
+
+    .field-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 13px 14px; }
+    .field-grid.one-column { grid-template-columns: 1fr; }
+    .field { min-width: 0; }
+    label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 10px; letter-spacing: 0.07em; text-transform: uppercase; }
+    input, select {
+      width: 100%;
+      min-height: 39px;
+      padding: 9px 10px;
+      color: var(--bright);
+      background: var(--bg-deep);
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      outline: none;
+    }
+    input:focus, select:focus { border-color: var(--blue); }
+    input[type="number"] { font-variant-numeric: tabular-nums; }
+    .checkbox-field label {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      margin: 0;
+      color: var(--bright);
+      font-size: 12px;
+      letter-spacing: 0.03em;
+      text-transform: none;
+      cursor: pointer;
+    }
+    .checkbox-field input[type="checkbox"] {
+      width: 16px;
+      min-height: 16px;
+      margin: 0;
+      accent-color: var(--blue);
+      cursor: pointer;
+    }
+    .readonly-value {
+      width: 100%;
+      min-height: 22px;
+      display: block;
+      padding: 0;
+      color: var(--bright);
+      font-size: 13px;
+      font-variant-numeric: tabular-nums;
+    }
+    .field-help { margin-top: 5px; color: var(--muted); font-size: 10px; line-height: 1.4; }
+
+    .btn-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 15px; }
+    .btn {
+      min-height: 38px;
+      padding: 8px 14px;
+      color: var(--text);
+      background: var(--bg-deep);
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      font-size: 12px;
+      letter-spacing: 0.03em;
+    }
+    .btn:hover { background: var(--blue); border-color: var(--blue-light); color: var(--bright); }
+    .btn-primary { color: var(--bright); border-color: var(--blue); }
+    .btn-success { color: var(--green); border-color: rgba(1, 249, 1, 0.65); }
+    .btn-danger { color: var(--danger); border-color: rgba(239, 83, 80, 0.6); }
+    .btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 20;
+      display: grid;
+      place-items: center;
+      padding: 18px;
+      background: rgba(9, 33, 63, 0.78);
+    }
+    .modal-card {
+      width: min(100%, 390px);
+      padding: 18px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: 0 14px 35px rgba(0, 0, 0, 0.28);
+    }
+    .modal-card h2 { margin: 0; color: var(--bright); font-size: 14px; letter-spacing: 0.08em; text-transform: uppercase; }
+    .modal-card p { margin: 12px 0 0; color: var(--muted); font-size: 12px; line-height: 1.5; }
+    .modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 18px; }
+
+    .step-list { display: grid; gap: 9px; }
+    .step {
+      display: grid;
+      grid-template-columns: 28px 1fr;
+      align-items: start;
+      gap: 10px;
+      padding: 11px;
+      background: var(--panel-soft);
+      border: 1px solid var(--border);
+      border-radius: 5px;
+    }
+    .step-body { min-width: 0; }
+    .step-number { width: 24px; height: 24px; display: grid; place-items: center; color: var(--bright); background: var(--blue); border-radius: 50%; font-size: 11px; }
+    .step-title { color: var(--bright); font-size: 12px; }
+    .step-description { margin-top: 3px; color: var(--muted); font-size: 10px; line-height: 1.35; }
+    .step-reading { margin-top: 9px; color: var(--blue-light); font-size: 11px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+    .step .btn { margin-top: 10px; }
+    .step .field { margin-top: 10px !important; }
+    .step .result { margin-top: 10px; }
+
+    .notice { padding: 11px 12px; color: var(--muted); background: rgba(0, 105, 180, 0.12); border-left: 3px solid var(--blue); font-size: 11px; line-height: 1.5; }
+    .notice.warning { border-left-color: var(--blue); }
+    .result { margin-top: 13px; padding: 13px; color: var(--bright); background: var(--bg-deep); border: 1px solid var(--border); border-radius: 5px; font-size: 13px; }
+    .result strong { color: var(--blue-light); font-size: 21px; }
+    .adjustment-list-heading { display: flex; justify-content: flex-start; align-items: baseline; gap: 8px; margin-top: 15px; margin-bottom: 8px; color: var(--muted); font-size: 13px; line-height: 1.4; }
+    .adjustment-count { color: var(--blue-light); white-space: nowrap; }
+    .saved-adjustments { display: grid; gap: 8px; max-height: 370px; padding-right: 6px; overflow-y: auto; scrollbar-width: thin; scrollbar-color: var(--blue) transparent; }
+    .saved-adjustments::-webkit-scrollbar { width: 6px; }
+    .saved-adjustments::-webkit-scrollbar-track { background: transparent; }
+    .saved-adjustments::-webkit-scrollbar-thumb { background: var(--blue); border-radius: 3px; }
+    .adjustment-row { display: grid; grid-template-columns: 1fr; gap: 5px; padding: 10px 11px; background: var(--bg-deep); border: 1px solid var(--border); border-radius: 5px; }
+    .adjustment-main { display: block; min-width: 0; }
+    .adjustment-date { color: var(--bright); font-size: 12px; font-variant-numeric: tabular-nums; }
+    .adjustment-ppfd { display: block; margin-top: 3px; color: var(--blue-light); font-size: 12px; font-variant-numeric: tabular-nums; }
+    .adjustment-meta { color: var(--muted); font-size: 12px; line-height: 1.35; font-variant-numeric: tabular-nums; }
+    .adjustment-actions { display: flex; align-items: center; justify-content: flex-end; gap: 8px; width: 100%; padding-top: 3px; }
+    .adjustment-actions .adjustment-active { margin-right: auto; }
+    .adjustment-active { color: var(--green); font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; }
+    .adjustment-use { min-height: 28px; padding: 5px 9px; color: var(--text); background: var(--panel); border-color: var(--blue); font-size: 10px; }
+    .adjustment-delete { color: var(--text); background: var(--bg); border-color: var(--blue); }
+    .hidden { display: none !important; }
+    .saved { min-height: 17px; margin-top: 10px; color: var(--green); font-size: 11px; }
+    .saved.error { color: var(--danger); }
+
+    footer {
+      position: fixed;
+      right: 0;
+      bottom: 0;
+      left: 0;
+      z-index: 5;
+      background: var(--black);
+      border: 0;
+    }
+    .footer-nav { width: min(100%, 760px); margin: 0 auto; display: grid; grid-template-columns: repeat(3, 1fr); }
+    .nav-btn { min-height: 57px; padding: 4px; color: var(--bright); background: transparent; border: 0; font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; }
+    .nav-btn.active { color: var(--blue); }
+    .nav-icon { display: block; width: 21px; height: 21px; margin: 0 auto 5px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+
+    @media (min-width: 620px) {
+      main { padding: 26px 24px 34px; }
+      .measurement-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+      .measurement { min-height: 138px; }
+      .measurement-value { font-size: 30px; }
+      .measurement-grid.single-ppfd { grid-template-columns: 1fr; }
+      .measurement-grid.single-ppfd .measurement.primary .measurement-value { font-size: 58px; }
+      #dash-measurement-grid.dash-stack .measurement.primary .measurement-value { font-size: 58px; }
+      /* Keep the large PPFD readout taller than the compact DLI readout.
+         The generic desktop minimum must not stretch DLI unnecessarily. */
+      #dash-measurement-grid.single-ppfd #dash-dli { min-height: 0; }
+      #dash-measurement-grid.dli-layout { grid-template-columns: 1fr; }
+      #dash-measurement-grid.dli-layout .measurement.primary { grid-column: 1 / -1; }
+      #dash-measurement-grid.dli-layout #dash-dli { grid-column: 1 / -1; }
+      #cal-measurement-grid.single-ppfd { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+      #cal-measurement-grid.single-ppfd .measurement.primary { grid-column: span 2; }
+    }
+    @media (max-width: 430px) {
+      .field-grid, .info-grid { grid-template-columns: 1fr; }
+      .step { grid-template-columns: 28px 1fr; }
+      .step-reading { grid-column: 2; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <img class="logo" src="licor-logo.png" alt="LI-COR">
+      <div class="header-meta">
+        <div>
+          <div class="device-name" id="header-device">-</div>
+          <div class="serial" id="header-serial">-</div>
+        </div>
+        <span class="status-dot" id="connection-dot" aria-label="Connection status"></span>
+      </div>
+    </header>
+
+    <main>
+      <section id="tab-dashboard" class="tab active">
+        <h1 class="page-title">Quantum Sensor</h1>
+        <p class="page-subtitle">Live measurement from the LI-COR sensor.</p>
+
+        <section class="card">
+          <div class="card-heading">
+            <h2>Current measurement</h2>
+          </div>
+          <div class="measurement-grid single-ppfd" id="dash-measurement-grid">
+            <article class="measurement primary">
+              <div class="measurement-label">PPFD</div>
+              <div class="measurement-value" id="dash-ppfd">--</div>
+              <div class="measurement-unit">µmol m⁻² s⁻¹</div>
+            </article>
+            <article class="measurement hidden" id="dash-irradiance">
+              <div class="measurement-label">Irradiance</div>
+              <div class="measurement-value" id="dash-wm2">--</div>
+              <div class="measurement-unit">W/m²</div>
+            </article>
+            <article class="measurement hidden" id="dash-dli">
+              <div class="measurement-label" id="dash-dli-label">DLI</div>
+              <div class="measurement-value" id="dash-dli-value">--</div>
+              <div class="measurement-unit" id="dash-dli-unit">mol m⁻² (12 h)</div>
+            </article>
+          </div>
+        </section>
+
+        <section class="card">
+          <div class="card-heading sensor-config-heading"><h2>Sensor</h2><span class="muted small" id="info-calibration-mode">--</span></div>
+          <div class="info-grid">
+            <div class="info-item"><div class="info-label">Model</div><div class="info-value" id="info-model">--</div></div>
+            <div class="info-item"><div class="info-label">Serial</div><div class="info-value" id="info-serial">--</div></div>
+            <div class="info-item"><div class="info-label">Shunt</div><div class="info-value" id="info-shunt">--</div></div>
+            <div class="info-item"><div class="info-label">Current multiplier</div><div class="info-value" id="info-multiplier">--</div></div>
+            <div class="info-item"><div class="info-label">Active voltage factor</div><div class="info-value" id="info-voltage-factor">--</div></div>
+            <div class="info-item"><div class="info-label">Last calibration</div><div class="info-value" id="info-calibration-date">--</div></div>
+          </div>
+        </section>
+
+        <section class="card">
+          <div class="card-heading"><h2>Network</h2></div>
+          <div class="info-grid">
+            <div class="info-item"><div class="info-label">SSID</div><div class="info-value" id="info-ssid">--</div></div>
+            <div class="info-item"><div class="info-label">Host</div><div class="info-value" id="info-host">--</div></div>
+            <div class="info-item"><div class="info-label">MQTT server</div><div class="info-value" id="info-mqtt">--</div></div>
+            <div class="info-item"><div class="info-label">Status topic</div><div class="info-value" id="info-topic">--</div></div>
+            <div class="info-item"><div class="info-label">MQTT interval</div><div class="info-value" id="info-mqtt-interval">--</div></div>
+          </div>
+        </section>
+      </section>
+
+      <section id="tab-calibration" class="tab">
+        <h1 class="page-title">Calibration</h1>
+        <p class="page-subtitle">Perform a calibration in open sunlight.</p>
+
+        <section class="card">
+          <div class="card-heading"><h2>Current measurement</h2></div>
+          <div class="measurement-grid single-ppfd" id="cal-measurement-grid">
+            <article class="measurement primary">
+              <div class="measurement-label">PPFD</div>
+              <div class="measurement-value" id="cal-ppfd">--</div>
+              <div class="measurement-unit">µmol m⁻² s⁻¹</div>
+            </article>
+            <article class="measurement">
+              <div class="measurement-label">Shunt voltage</div>
+              <div class="measurement-value" id="cal-mv">--</div>
+              <div class="measurement-unit">mV</div>
+            </article>
+            <article class="measurement">
+              <div class="measurement-label">Sensor current</div>
+              <div class="measurement-value" id="cal-ua">--</div>
+              <div class="measurement-unit">µA</div>
+            </article>
+          </div>
+        </section>
+
+        <section class="card">
+          <div class="card-heading"><h2>Guided calibration</h2></div>
+          <div class="notice warning">For best accuracy with the Clear Sky Calculator, measure on a clear, non-polluted summer day within one hour of solar noon.</div>
+          <div class="step-list" style="margin-top: 13px;">
+            <div class="step">
+              <div class="step-number">1</div>
+              <div class="step-body">
+                <div class="step-title">Measure reference light</div>
+                <div class="step-description">Take the PAR Sensor outside on a sunny and cloudless day. Make sure that you have calculated the theoretical PPFD for your date and location.</div>
+                <button class="btn btn-primary" id="measure-reference-btn" type="button">Measure light</button>
+                <div class="step-reading" id="reference-reading">Not measured</div>
+              </div>
+            </div>
+            <div class="step">
+              <div class="step-number">2</div>
+              <div class="step-body">
+                <div class="step-title">Cover the sensor completely</div>
+                <div class="step-description">Fit the protective cap or block all light, then record the dark offset as zero.</div>
+                <button class="btn btn-primary" id="measure-dark-btn" type="button" disabled>Measure dark</button>
+                <div class="step-reading" id="dark-reading">Not measured</div>
+              </div>
+            </div>
+            <div class="step">
+              <div class="step-number">3</div>
+              <div class="step-body">
+                <div class="step-title">Clear Sky Calculator reference</div>
+                <div class="field">
+                  <label for="reference-ppfd">Reference PPFD</label>
+                  <input id="reference-ppfd" type="number" min="0" step="0.1" placeholder="e.g. 1650">
+                  <div class="field-help">Enter the calculated PPFD value.</div>
+                </div>
+                <button class="btn btn-primary" id="calculate-calibration-btn" type="button" disabled>Calculate factor</button>
+              </div>
+            </div>
+            <div class="step">
+              <div class="step-number">4</div>
+              <div class="step-body">
+                <div class="step-title">Save calibration</div>
+                <div class="step-description">Review the calculated factor, then save the new field calibration.</div>
+                <div class="result hidden" id="calibration-result"></div>
+                <button class="btn btn-primary" id="save-calibration-btn" type="button" disabled>Save calibration</button>
+              </div>
+            </div>
+          </div>
+          <div class="saved" id="calibration-message"></div>
+        </section>
+
+        <section class="card">
+          <div class="card-heading"><h2>Calibration details</h2></div>
+          <div class="info-grid">
+            <div class="info-item"><div class="info-label">Active calibration</div><div class="info-value" id="cal-active-type">--</div></div>
+            <div class="info-item"><div class="info-label">Calibration date</div><div class="info-value" id="cal-active-date">--</div></div>
+            <div class="info-item"><div class="info-label">Active voltage factor</div><div class="info-value" id="cal-current-factor">--</div></div>
+            <div class="info-item"><div class="info-label">Certificate voltage factor</div><div class="info-value" id="cal-certificate-factor">--</div></div>
+            <div class="info-item"><div class="info-label">Dark offset</div><div class="info-value" id="cal-current-offset">--</div></div>
+          </div>
+          <div class="btn-row">
+            <button class="btn btn-primary" id="restore-certificate-btn" type="button">Restore certificate calibration</button>
+          </div>
+          <div class="saved" id="restore-message"></div>
+          <div class="adjustment-list-heading"><span>Saved field adjustments</span><span id="field-adjustment-count" class="adjustment-count">0/20</span></div>
+          <div id="field-adjustments-list" class="saved-adjustments"></div>
+          <div class="btn-row">
+            <button class="btn btn-primary" id="delete-all-adjustments-btn" type="button">Delete all</button>
+          </div>
+        </section>
+      </section>
+
+      <section id="tab-settings" class="tab">
+        <h1 class="page-title">Settings</h1>
+        <p class="page-subtitle">Wi-Fi, MQTT and Sensor settings.</p>
+
+        <section class="card">
+          <div class="card-heading"><h2>Wi-Fi</h2></div>
+          <div class="field-grid one-column">
+            <div class="field"><label for="wifi-ssid">SSID</label><input id="wifi-ssid" type="text"></div>
+            <div class="field"><label for="wifi-password">Password</label><input id="wifi-password" type="password"></div>
+            <div class="field"><label for="hostname">Host name</label><input id="hostname" type="text"></div>
+          </div>
+        </section>
+
+        <section class="card">
+          <div class="card-heading"><h2>MQTT</h2></div>
+          <div class="field-grid one-column">
+            <div class="field"><label for="mqtt-server">MQTT server</label><input id="mqtt-server" type="text"></div>
+            <div class="field"><label for="mqtt-user">User</label><input id="mqtt-user" type="text"></div>
+            <div class="field"><label for="mqtt-password">Password</label><input id="mqtt-password" type="password"></div>
+            <div class="field"><label for="topic-status">Status topic</label><input id="topic-status" type="text"></div>
+            <div class="field"><label for="mqtt-interval">Publish interval (seconds)</label><input id="mqtt-interval" type="number" min="1" step="1"><div class="field-help">How often the sensor publishes a status message to MQTT.</div></div>
+            <div class="field checkbox-field"><label for="mqtt-retain"><input id="mqtt-retain" type="checkbox"> <span>Retain status messages</span></label><div class="field-help">When enabled, the broker keeps the latest status for new subscribers.</div></div>
+          </div>
+        </section>
+
+        <section class="card">
+          <div class="card-heading"><h2>Sensor settings</h2></div>
+          <div class="field-grid">
+            <div class="field"><label for="sensor-model">Model</label><input id="sensor-model" type="text"></div>
+            <div class="field"><label for="sensor-serial">Serial number</label><input id="sensor-serial" type="text"></div>
+            <div class="field"><label for="certificate-date">Certificate calibration date</label><input id="certificate-date" type="date"><div class="field-help">Date printed on the original LI-COR calibration certificate.</div></div>
+            <div class="field"><label>Last field adjustment</label><div class="readonly-value" id="field-adjustment-date">None</div><div class="field-help">Set automatically when the calibration wizard is saved.</div></div>
+            <div class="field"><label for="shunt-ohms">Measured shunt resistance (Ω)</label><input id="shunt-ohms" type="number" min="1" step="0.01"><div class="field-help">Enter the resistance measured with the multimeter.</div></div>
+            <div class="field"><label for="multiplier">LI-COR multiplier (µmol m⁻² s⁻¹/µA)</label><input id="multiplier" type="number" min="0" step="0.001"></div>
+            <div class="field"><label for="certificate-dark-offset">Certificate dark offset (mV)</label><input id="certificate-dark-offset" type="number" min="0" step="0.00001"><div class="field-help">Dark offset from the certificate calibration. Used when certificate calibration is restored.</div></div>
+            <div class="field"><label>Active voltage factor (µmol m⁻² s⁻¹/mV)</label><div class="readonly-value" id="settings-voltage-factor">--</div><div class="field-help">Calculated from the active calibration, shunt, and LI-COR multiplier.</div></div>
+            <div class="field"><label>Active dark offset (mV)</label><div class="readonly-value" id="settings-dark-offset">--</div><div class="field-help">Captured by the calibration wizard; use Measure dark to update it.</div></div>
+            <div class="field"><label for="polarity">Differential polarity</label><select id="polarity"><option value="1">Normal (A0 - A1)</option><option value="-1">Reversed (A1 - A0)</option></select></div>
+            <div class="field"><label for="sample-count">Samples per average</label><input id="sample-count" type="number" min="1" max="128" step="1"></div>
+            <div class="field"><label for="sample-interval">Update interval (ms)</label><input id="sample-interval" type="number" min="100" step="100"></div>
+          </div>
+        </section>
+
+        <section class="card">
+          <div class="card-heading"><h2>PPFD correction</h2></div>
+          <div class="field-grid one-column">
+            <div class="field"><label for="ppfd-correction-factor">PPFD correction factor</label><input id="ppfd-correction-factor" type="number" min="0.000001" step="0.0001"><div class="field-help">Applied to displayed PPFD, DLI, and MQTT PPFD. It does not change the solar Irradiance estimate.</div></div>
+          </div>
+        </section>
+
+        <section class="card">
+          <div class="card-heading"><h2>DLI</h2><span class="muted small">Estimated</span></div>
+          <div class="field-grid one-column">
+            <div class="field checkbox-field"><label for="show-dli"><input id="show-dli" type="checkbox"> <span>Show DLI</span></label><div class="field-help">Show the estimated Daily Light Integral on the Dashboard.</div></div>
+            <div class="field"><label for="dli-light-hours">Light period (hours)</label><input id="dli-light-hours" type="number" min="1" max="24" step="0.1"><div class="field-help">Used with the current PPFD to estimate the daily light integral.</div></div>
+          </div>
+        </section>
+
+        <section class="card">
+          <div class="card-heading"><h2>Irradiance</h2><span class="muted small">Estimated</span></div>
+          <div class="field-grid one-column">
+            <div class="field checkbox-field"><label for="show-irradiance"><input id="show-irradiance" type="checkbox"> <span>Show Irradiance</span></label><div class="field-help">Show the estimated Irradiance on the Dashboard.</div></div>
+            <div class="field"><label for="w-per-umol">Power conversion (W/m² per µmol m⁻² s⁻¹)</label><input id="w-per-umol" type="number" min="0" step="0.001"><div class="field-help">This depends on the light spectrum. The displayed Irradiance value is an estimate.</div></div>
+          </div>
+        </section>
+
+        <section class="card">
+          <div class="btn-row" style="margin-top: 0;">
+            <button class="btn btn-success" id="save-settings-btn" type="button">Save settings</button>
+            <button class="btn" id="reboot-btn" type="button">Reboot</button>
+          </div>
+          <div class="saved" id="settings-message"></div>
+        </section>
+      </section>
+    </main>
+
+    <footer>
+      <nav class="footer-nav" aria-label="Main navigation">
+        <button class="nav-btn active" data-tab="dashboard" type="button">
+          <svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"></rect><rect x="14" y="3" width="7" height="7" rx="1"></rect><rect x="3" y="14" width="7" height="7" rx="1"></rect><rect x="14" y="14" width="7" height="7" rx="1"></rect></svg>
+          Dashboard
+        </button>
+        <button class="nav-btn" data-tab="calibration" type="button">
+          <svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"></circle><circle cx="12" cy="12" r="3"></circle><path d="M12 4v2M12 18v2M4 12h2M18 12h2"></path></svg>
+          Calibration
+        </button>
+        <button class="nav-btn" data-tab="settings" type="button">
+          <svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.38a2 2 0 0 0-.73-2.73l-.15-.09a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+          Settings
+        </button>
+      </nav>
+    </footer>
+  </div>
+
+  <div class="modal-backdrop hidden" id="reboot-modal" role="dialog" aria-modal="true" aria-labelledby="reboot-modal-title">
+    <div class="modal-card">
+      <h2 id="reboot-modal-title">Reboot device</h2>
+      <p>Reboot the LI-COR device now? The web interface will be unavailable briefly while the ESP32 restarts.</p>
+      <div class="modal-actions">
+        <button class="btn" id="cancel-reboot-btn" type="button">Cancel</button>
+        <button class="btn btn-primary" id="confirm-reboot-btn" type="button">Reboot</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop hidden" id="calibration-confirm-modal" role="dialog" aria-modal="true" aria-labelledby="calibration-confirm-title">
+    <div class="modal-card">
+      <h2 id="calibration-confirm-title">Delete field adjustment</h2>
+      <p id="calibration-confirm-message">Delete this saved field adjustment?</p>
+      <div class="modal-actions">
+        <button class="btn" id="cancel-calibration-confirm-btn" type="button">Cancel</button>
+        <button class="btn btn-danger" id="confirm-calibration-btn" type="button">Delete</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let appConfig = null;
+    let liveStatus = null;
+    let pendingCalibrationFactor = null;
+    let pendingDarkOffset = null;
+    let pendingReferenceVoltage = null;
+    let pendingCalibrationAction = null;
+    const messageTimers = {};
+
+    function updateCalibrationWizard() {
+      const hasLight = pendingReferenceVoltage !== null && Number.isFinite(Number(pendingReferenceVoltage));
+      const hasDark = pendingDarkOffset !== null && Number.isFinite(Number(pendingDarkOffset));
+      const hasFactor = pendingCalibrationFactor !== null && Number.isFinite(Number(pendingCalibrationFactor)) && Number(pendingCalibrationFactor) > 0;
+      $("measure-dark-btn").disabled = !hasLight;
+      $("calculate-calibration-btn").disabled = !hasDark;
+      $("save-calibration-btn").disabled = !hasFactor;
+    }
+
+    const $ = (id) => document.getElementById(id);
+    const number = (value, decimals = 2) => Number.isFinite(Number(value)) ? Number(value).toFixed(decimals) : "--";
+
+    function clearMessage(id) {
+      if (messageTimers[id]) {
+        clearTimeout(messageTimers[id]);
+        delete messageTimers[id];
+      }
+      const element = $(id);
+      if (element) {
+        element.textContent = "";
+        element.classList.remove("error");
+      }
+    }
+
+    function showMessage(id, text, kind = "success") {
+      clearMessage(id);
+      const element = $(id);
+      if (!element) return;
+      element.textContent = text;
+      element.classList.toggle("error", kind === "error");
+      if (kind === "success") {
+        messageTimers[id] = setTimeout(() => {
+          if (element.textContent === text) clearMessage(id);
+        }, 5000);
+      }
+    }
+
+    function formatCalibrationDate(value, fallback = "Not set") {
+      if (!value) return fallback;
+      if (/^\d{4}-\d{2}-\d{2}$/.test(String(value))) return String(value);
+      const date = new Date(value);
+      if (Number.isNaN(date.getTime())) return String(value);
+      const datePart = date.toISOString().slice(0, 10);
+      const timePart = date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+      return datePart + " · " + timePart;
+    }
+
+    function escapeHtml(value) {
+      return String(value ?? "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    function getFieldAdjustments() {
+      return appConfig && Array.isArray(appConfig.FieldAdjustments) ? appConfig.FieldAdjustments : [];
+    }
+
+    function getActiveFieldAdjustment() {
+      if (appConfig.Sensor.ActiveCalibration !== "field") return null;
+      return getFieldAdjustments().find((entry) => entry.Active === true) || getFieldAdjustments()[getFieldAdjustments().length - 1] || null;
+    }
+
+    function renderFieldAdjustments() {
+      const list = $("field-adjustments-list");
+      const entries = getFieldAdjustments();
+      $("field-adjustment-count").textContent = entries.length + "/20";
+      $("delete-all-adjustments-btn").classList.toggle("hidden", entries.length === 0);
+      if (entries.length === 0) {
+        list.innerHTML = '<div class="saved">No saved field adjustments.</div>';
+        return;
+      }
+
+      list.innerHTML = entries.slice().sort((a, b) => String(b.Date || "").localeCompare(String(a.Date || ""))).map((entry) => {
+        const id = escapeHtml(entry.Id || entry.Date || "field-adjustment");
+        const referencePpfd = Number(entry.ReferencePpfd);
+        const factor = Number(entry.VoltageMultiplierUmolPerMv);
+        const darkOffset = Number(entry.DarkOffsetMv);
+        return '<div class="adjustment-row">'
+          + '<div class="adjustment-main"><span class="adjustment-date">' + escapeHtml(formatCalibrationDate(entry.Date, "Field adjustment")) + '</span>'
+          + '<span class="adjustment-ppfd">' + (referencePpfd > 0 ? number(referencePpfd, 1) : "--") + ' PPFD</span></div>'
+          + '<div class="adjustment-meta">Factor ' + number(factor, 4) + ' / mV · Dark ' + number(darkOffset, 4) + ' mV</div>'
+          + '<div class="adjustment-actions">'
+          + (entry.Active === true && appConfig.Sensor.ActiveCalibration === "field" ? '<span class="adjustment-active">Active</span>' : "")
+          + '<button class="btn adjustment-use" data-adjustment-action="use" data-adjustment-id="' + id + '" type="button">Use</button>'
+          + '<button class="btn adjustment-use adjustment-delete" data-adjustment-action="delete" data-adjustment-id="' + id + '" type="button">Delete</button>'
+          + '</div>'
+          + '</div>';
+      }).join("");
+    }
+
+    function isValidConfig(config) {
+      if (!config || typeof config !== "object") return false;
+      const topLevelKeys = ["SSID", "PASS", "MQTTSERVER", "MQTTUser", "MQTTPass", "TopicSTATUS", "MQTTIntervalSeconds", "MQTTRetainStatus", "ShowIrradiance", "ShowDLI", "DLILightHours", "PpfdCorrectionFactor", "HostName", "Sensor", "FactoryCalibration", "FieldAdjustments"];
+      if (topLevelKeys.some((key) => !(key in config))) return false;
+      const sensorKeys = ["Model", "Serial", "ActiveCalibration", "ShuntResistanceOhms", "MultiplierUmolPerUa", "VoltageMultiplierUmolPerMv", "DifferentialPolarity", "DarkOffsetMv", "SampleCount", "SampleIntervalMs", "WPerM2PerUmol"];
+      const factoryKeys = ["MultiplierUmolPerUa", "DarkOffsetMv", "CalibrationDate"];
+      if (!sensorKeys.every((key) => key in config.Sensor) || !factoryKeys.every((key) => key in config.FactoryCalibration)) return false;
+      if (typeof config.ShowIrradiance !== "boolean") return false;
+      if (typeof config.ShowDLI !== "boolean" || !(Number(config.DLILightHours) >= 1 && Number(config.DLILightHours) <= 24)) return false;
+      if (!(Number(config.PpfdCorrectionFactor) > 0)) return false;
+      if (!(config.HostName && Number(config.MQTTIntervalSeconds) >= 1)) return false;
+      if (!["certificate", "field"].includes(config.Sensor.ActiveCalibration)) return false;
+      if (!(Number(config.Sensor.ShuntResistanceOhms) > 0 && Number(config.Sensor.MultiplierUmolPerUa) > 0 && Number(config.Sensor.VoltageMultiplierUmolPerMv) > 0)) return false;
+      if (![1, -1].includes(Number(config.Sensor.DifferentialPolarity))) return false;
+      if (!(Number(config.Sensor.SampleCount) >= 1 && Number(config.Sensor.SampleCount) <= 128 && Number(config.Sensor.SampleIntervalMs) >= 100 && Number(config.Sensor.WPerM2PerUmol) > 0)) return false;
+      if (!(Number(config.FactoryCalibration.MultiplierUmolPerUa) > 0 && Number(config.FactoryCalibration.DarkOffsetMv) >= 0)) return false;
+      if (!Array.isArray(config.FieldAdjustments) || config.FieldAdjustments.length > 20) return false;
+      return config.FieldAdjustments.every((entry) => entry && entry.Id && entry.Date && Number(entry.ReferencePpfd) > 0 && Number(entry.VoltageMultiplierUmolPerMv) > 0 && Number(entry.DarkOffsetMv) >= 0 && typeof entry.Active === "boolean");
+    }
+
+    async function loadConfig() {
+      try {
+        const response = await fetch("config.json?t=" + Date.now(), { cache: "no-store" });
+        if (!response.ok) throw new Error("config unavailable");
+        const remote = await response.json();
+        if (!isValidConfig(remote)) throw new Error("config invalid");
+        appConfig = remote;
+        fillSettings();
+        renderAll();
+      } catch (error) {
+        appConfig = null;
+        liveStatus = null;
+        renderUnavailable();
+      }
+    }
+
+    function renderUnavailable() {
+      ["dash-ppfd", "dash-wm2", "dash-dli-value", "cal-ppfd", "cal-mv", "cal-ua", "info-model", "info-serial", "info-shunt", "info-multiplier", "info-voltage-factor", "cal-current-factor", "cal-certificate-factor", "cal-current-offset"].forEach((id) => { if ($(id)) $(id).textContent = "--"; });
+      if ($("dash-dli-label")) $("dash-dli-label").textContent = "DLI";
+      if ($("dash-dli-unit")) $("dash-dli-unit").textContent = "mol m⁻² (--)";
+      updateIrradianceVisibility();
+      showMessage("settings-message", "Configuration unavailable. Upload a complete config.json.", "error");
+      showMessage("calibration-message", "Configuration unavailable. Upload a complete config.json.", "error");
+      showMessage("restore-message", "Configuration unavailable. Upload a complete config.json.", "error");
+      setConnection(false);
+    }
+
+    function renderAll() {
+      if (!appConfig) {
+        renderUnavailable();
+        return;
+      }
+      const sensor = appConfig.Sensor;
+      const status = liveStatus || {};
+      const configuredFactor = Number(sensor.VoltageMultiplierUmolPerMv);
+      const certificateFactor = Number(appConfig.FactoryCalibration.MultiplierUmolPerUa) * 1000 / Number(sensor.ShuntResistanceOhms);
+      updateIrradianceVisibility();
+      const hasStatus = Number.isFinite(Number(status.VoltageMv)) && Number.isFinite(Number(status.Ppfd));
+      const ppfd = hasStatus ? Number(status.Ppfd) : null;
+      const rawPpfd = hasStatus && Number.isFinite(Number(status.RawPpfd))
+        ? Number(status.RawPpfd)
+        : (hasStatus ? Math.max(0, (Number(status.VoltageMv) - Number(sensor.DarkOffsetMv)) * configuredFactor) : null);
+      const watts = rawPpfd === null ? null : rawPpfd * Number(sensor.WPerM2PerUmol);
+      const dli = ppfd === null ? null : ppfd * Number(appConfig.DLILightHours) * 3600 / 1000000;
+      const dliHours = Number(appConfig.DLILightHours);
+      const dliHoursLabel = Number.isInteger(dliHours) ? String(dliHours) : dliHours.toFixed(1);
+
+      $("header-device").textContent = sensor.Model || "--";
+      $("header-serial").textContent = "Serial " + (sensor.Serial || "--");
+      $("dash-ppfd").textContent = ppfd === null ? "--" : number(ppfd, 1);
+      $("dash-wm2").textContent = watts === null ? "--" : number(watts, 1);
+      $("dash-dli-value").textContent = dli === null ? "--" : number(dli, 2);
+      $("dash-dli-label").textContent = "DLI";
+      $("dash-dli-unit").textContent = "mol m⁻² (" + dliHoursLabel + " h)";
+      $("cal-ppfd").textContent = ppfd === null ? "--" : number(ppfd, 1);
+      $("cal-mv").textContent = number(status.VoltageMv, 4);
+      $("cal-ua").textContent = number(status.CurrentUa, 3);
+
+      $("info-model").textContent = sensor.Model || "--";
+      $("info-serial").textContent = sensor.Serial || "--";
+      $("info-shunt").textContent = number(sensor.ShuntResistanceOhms, 2) + " Ω";
+      $("info-multiplier").textContent = number(appConfig.FactoryCalibration.MultiplierUmolPerUa, 3) + " / µA";
+      $("info-voltage-factor").textContent = number(configuredFactor, 4) + " / mV";
+      const field = getActiveFieldAdjustment();
+      const usingField = sensor.ActiveCalibration === "field" && field !== null;
+      $("info-calibration-date").textContent = usingField ? formatCalibrationDate(field.Date, "Field adjusted") : (appConfig.FactoryCalibration.CalibrationDate || "Not set");
+      $("info-ssid").textContent = appConfig.SSID || "--";
+      $("info-host").textContent = appConfig.HostName || "--";
+      $("info-mqtt").textContent = appConfig.MQTTSERVER || "--";
+      $("info-topic").textContent = appConfig.TopicSTATUS || "--";
+      $("info-calibration-mode").textContent = usingField ? "Field adjustment" : "Certificate calibration";
+      $("info-mqtt-interval").textContent = number(appConfig.MQTTIntervalSeconds, 0) + " s";
+
+      $("cal-current-factor").textContent = number(configuredFactor, 4) + " / mV";
+      $("cal-certificate-factor").textContent = number(certificateFactor, 4) + " / mV";
+      $("cal-current-offset").textContent = number(sensor.DarkOffsetMv, 5) + " mV";
+      $("cal-active-type").textContent = usingField ? "Field adjustment" : "LI-COR certificate";
+      $("cal-active-date").textContent = usingField ? formatCalibrationDate(field.Date, "Field adjusted") : (appConfig.FactoryCalibration.CalibrationDate || "Not set");
+
+      renderFieldAdjustments();
+      setConnection(liveStatus !== null);
+      updateCalibrationWizard();
+    }
+
+    function updateIrradianceVisibility() {
+      const enabled = Boolean(appConfig && appConfig.ShowIrradiance === true);
+      const dliEnabled = Boolean(appConfig && appConfig.ShowDLI === true);
+      ["dash-irradiance"].forEach((id) => {
+        if ($(id)) $(id).classList.toggle("hidden", !enabled);
+      });
+      if ($("dash-dli")) $("dash-dli").classList.toggle("hidden", !dliEnabled);
+      if ($("dash-measurement-grid")) {
+        $("dash-measurement-grid").classList.toggle("single-ppfd", !enabled);
+        $("dash-measurement-grid").classList.toggle("dash-stack", enabled || dliEnabled);
+        $("dash-measurement-grid").classList.toggle("dli-layout", enabled && dliEnabled);
+      }
+      if ($("cal-measurement-grid")) $("cal-measurement-grid").classList.add("single-ppfd");
+    }
+
+    function fillSettings() {
+      if (!appConfig) return;
+      const sensor = appConfig.Sensor;
+      const factory = appConfig.FactoryCalibration;
+      const field = getActiveFieldAdjustment();
+      $("sensor-model").value = sensor.Model || "";
+      $("sensor-serial").value = sensor.Serial || "";
+      $("certificate-date").value = factory.CalibrationDate || "";
+      $("field-adjustment-date").textContent = field ? formatCalibrationDate(field.Date, "Field adjusted") : "None";
+      $("shunt-ohms").value = sensor.ShuntResistanceOhms ?? "";
+      $("multiplier").value = factory.MultiplierUmolPerUa ?? "";
+      $("certificate-dark-offset").value = Number(factory.DarkOffsetMv ?? 0).toFixed(5);
+      $("settings-voltage-factor").textContent = number(sensor.VoltageMultiplierUmolPerMv, 4) + " / mV";
+      $("polarity").value = String(sensor.DifferentialPolarity);
+      $("settings-dark-offset").textContent = number(sensor.DarkOffsetMv, 5) + " mV";
+      $("sample-count").value = sensor.SampleCount;
+      $("sample-interval").value = sensor.SampleIntervalMs;
+      $("w-per-umol").value = sensor.WPerM2PerUmol;
+      $("wifi-ssid").value = appConfig.SSID;
+      $("wifi-password").value = appConfig.PASS;
+      $("hostname").value = appConfig.HostName;
+      $("mqtt-server").value = appConfig.MQTTSERVER;
+      $("mqtt-user").value = appConfig.MQTTUser;
+      $("mqtt-password").value = appConfig.MQTTPass;
+      $("topic-status").value = appConfig.TopicSTATUS;
+      $("mqtt-interval").value = appConfig.MQTTIntervalSeconds;
+      $("mqtt-retain").checked = appConfig.MQTTRetainStatus;
+      $("show-irradiance").checked = appConfig.ShowIrradiance === true;
+      $("show-dli").checked = appConfig.ShowDLI === true;
+      $("dli-light-hours").value = appConfig.DLILightHours ?? 12;
+      $("ppfd-correction-factor").value = appConfig.PpfdCorrectionFactor ?? 1;
+    }
+
+    function setConnection(connected) {
+      $("connection-dot").classList.toggle("offline", !connected);
+    }
+
+    async function readLiveStatus(forceFresh = false) {
+      try {
+        const response = await fetch("/api/status?t=" + Date.now() + (forceFresh ? "&fresh=1" : ""), { cache: "no-store" });
+        if (response.ok) {
+          liveStatus = await response.json();
+          renderAll();
+          return liveStatus;
+        }
+      } catch (error) { /* The device is unavailable. */ }
+
+      liveStatus = null;
+      renderAll();
+      return null;
+    }
+
+    async function postJson(url, body) {
+      try {
+        const response = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+        if (response.ok) return await response.json().catch(() => ({}));
+      } catch (error) { /* The device is unavailable. */ }
+      return null;
+    }
+
+    function switchTab(tabName) {
+      document.querySelectorAll(".tab").forEach((tab) => tab.classList.toggle("active", tab.id === "tab-" + tabName));
+      document.querySelectorAll(".nav-btn").forEach((button) => button.classList.toggle("active", button.dataset.tab === tabName));
+      localStorage.setItem("licor-last-tab", tabName);
+    }
+
+    function collectSettings() {
+      if (!appConfig) return false;
+      const sensor = appConfig.Sensor;
+      const factory = appConfig.FactoryCalibration;
+      const previousShunt = Number(sensor.ShuntResistanceOhms);
+      const previousMultiplier = Number(factory.MultiplierUmolPerUa);
+      const previousFactoryDarkOffset = Number(factory.DarkOffsetMv);
+      sensor.Model = $("sensor-model").value.trim();
+      sensor.Serial = $("sensor-serial").value.trim();
+      factory.CalibrationDate = $("certificate-date").value;
+      sensor.ShuntResistanceOhms = Number($("shunt-ohms").value);
+      factory.MultiplierUmolPerUa = Number($("multiplier").value);
+      factory.DarkOffsetMv = Number($("certificate-dark-offset").value);
+      sensor.MultiplierUmolPerUa = factory.MultiplierUmolPerUa;
+      sensor.DifferentialPolarity = Number($("polarity").value);
+      sensor.SampleCount = Number($("sample-count").value);
+      sensor.SampleIntervalMs = Number($("sample-interval").value);
+      sensor.WPerM2PerUmol = Number($("w-per-umol").value);
+      appConfig.PpfdCorrectionFactor = Number($("ppfd-correction-factor").value);
+      if (!sensor.Model || !sensor.Serial || !(sensor.ShuntResistanceOhms > 0) || !(factory.MultiplierUmolPerUa > 0) || !(factory.DarkOffsetMv >= 0) || !(appConfig.PpfdCorrectionFactor > 0) || ![1, -1].includes(sensor.DifferentialPolarity) || !(sensor.SampleCount >= 1 && sensor.SampleCount <= 128) || !(sensor.SampleIntervalMs >= 100) || !(sensor.WPerM2PerUmol > 0)) {
+        showMessage("settings-message", "Enter valid sensor settings before saving.", "error");
+        return false;
+      }
+      const calibrationInputsChanged = previousShunt !== sensor.ShuntResistanceOhms ||
+        previousMultiplier !== factory.MultiplierUmolPerUa ||
+        previousFactoryDarkOffset !== factory.DarkOffsetMv;
+      if (calibrationInputsChanged || sensor.ActiveCalibration !== "field") {
+        sensor.ActiveCalibration = "certificate";
+        sensor.VoltageMultiplierUmolPerMv = factory.MultiplierUmolPerUa * 1000 / sensor.ShuntResistanceOhms;
+        sensor.DarkOffsetMv = factory.DarkOffsetMv;
+        appConfig.FieldAdjustments.forEach((entry) => { entry.Active = false; });
+      }
+      appConfig.SSID = $("wifi-ssid").value;
+      appConfig.PASS = $("wifi-password").value;
+      appConfig.HostName = $("hostname").value;
+      appConfig.MQTTSERVER = $("mqtt-server").value;
+      appConfig.MQTTUser = $("mqtt-user").value;
+      appConfig.MQTTPass = $("mqtt-password").value;
+      appConfig.TopicSTATUS = $("topic-status").value;
+      appConfig.MQTTIntervalSeconds = Number($("mqtt-interval").value);
+      appConfig.MQTTRetainStatus = $("mqtt-retain").checked;
+      appConfig.ShowIrradiance = $("show-irradiance").checked;
+      appConfig.ShowDLI = $("show-dli").checked;
+      appConfig.DLILightHours = Number($("dli-light-hours").value);
+      if (!(appConfig.MQTTIntervalSeconds >= 1) || !appConfig.HostName || !(appConfig.DLILightHours >= 1 && appConfig.DLILightHours <= 24) || !Array.isArray(appConfig.FieldAdjustments) || appConfig.FieldAdjustments.length > 20) {
+        showMessage("settings-message", "Enter valid network settings before saving.", "error");
+        return false;
+      }
+      return true;
+    }
+
+    function updateDerivedVoltageFactor() {
+      const shunt = Number($("shunt-ohms").value);
+      const multiplier = Number($("multiplier").value);
+      if (shunt > 0 && multiplier > 0) {
+        $("settings-voltage-factor").textContent = (multiplier * 1000 / shunt).toFixed(4) + " / mV";
+      }
+    }
+
+    async function saveSettings() {
+      clearMessage("settings-message");
+      if (!collectSettings()) return;
+      const payload = JSON.parse(JSON.stringify(appConfig));
+      const result = await postJson("/api/config", payload);
+      showMessage("settings-message", result ? "Settings saved to device." : "Unable to save settings to device.", result ? "success" : "error");
+      if (result) await loadConfig();
+      else renderAll();
+    }
+
+    function openRebootModal() {
+      $("reboot-modal").classList.remove("hidden");
+      $("confirm-reboot-btn").focus();
+    }
+
+    function closeRebootModal() {
+      $("reboot-modal").classList.add("hidden");
+    }
+
+    async function rebootDevice() {
+      closeRebootModal();
+      clearMessage("settings-message");
+      showMessage("settings-message", "Rebooting device.", "success");
+      // The device may close the HTTP connection while restarting, so a
+      // missing fetch response is not by itself a reboot failure.
+      await postJson("/api/reboot", {});
+      showMessage("settings-message", "Reboot requested. Reconnect after the device restarts.", "success");
+    }
+
+    async function measureDark() {
+      clearMessage("calibration-message");
+      if (pendingReferenceVoltage === null) {
+        showMessage("calibration-message", "Measure the reference light first, then cover the sensor and measure dark.", "error");
+        return;
+      }
+      const status = await readLiveStatus(true);
+      if (!status || !Number.isFinite(Number(status.VoltageMv))) {
+        showMessage("calibration-message", "Connect to the LI-COR device before measuring the dark offset.", "error");
+        return;
+      }
+      pendingDarkOffset = Number(status.VoltageMv);
+      pendingCalibrationFactor = null;
+      $("dark-reading").textContent = number(pendingDarkOffset, 4) + " mV";
+      $("calibration-result").classList.add("hidden");
+      $("settings-dark-offset").textContent = number(pendingDarkOffset, 5) + " mV";
+      showMessage("calibration-message", "Dark offset captured. Enter the reference PPFD value, then calculate the new factor.");
+      updateCalibrationWizard();
+    }
+
+    async function measureReference() {
+      clearMessage("calibration-message");
+      const status = await readLiveStatus(true);
+      if (!status || !Number.isFinite(Number(status.VoltageMv))) {
+        showMessage("calibration-message", "Connect to the LI-COR device before measuring the reference light.", "error");
+        return;
+      }
+      pendingReferenceVoltage = Number(status.VoltageMv);
+      pendingDarkOffset = null;
+      pendingCalibrationFactor = null;
+      $("reference-reading").textContent = number(pendingReferenceVoltage, 4) + " mV";
+      $("dark-reading").textContent = "Not measured";
+      $("calibration-result").classList.add("hidden");
+      showMessage("calibration-message", "Reference voltage captured. Cover the sensor and measure the dark offset.");
+      updateCalibrationWizard();
+    }
+
+    function calculateCalibration() {
+      clearMessage("calibration-message");
+      const dark = pendingDarkOffset ?? Number(appConfig.Sensor.DarkOffsetMv || 0);
+      const referenceVoltage = pendingReferenceVoltage;
+      const referencePpfd = Number($("reference-ppfd").value);
+      const effectiveVoltage = Number(referenceVoltage) - Number(dark);
+      if (!(effectiveVoltage > 0) || !(referencePpfd > 0)) {
+        showMessage("calibration-message", "Measure both points and enter a positive reference PPFD.", "error");
+        return;
+      }
+      pendingCalibrationFactor = referencePpfd / effectiveVoltage;
+      $("calibration-result").classList.remove("hidden");
+      $("calibration-result").innerHTML = "New voltage factor: <strong>" + number(pendingCalibrationFactor, 4) + "</strong> µmol m⁻² s⁻¹ per mV";
+      updateCalibrationWizard();
+      showMessage("calibration-message", "Review the result, then save it.");
+    }
+
+    async function saveCalibration() {
+      clearMessage("calibration-message");
+      if (!(pendingCalibrationFactor > 0)) return;
+      const timestamp = new Date().toISOString();
+      const result = await postJson("/api/calibration", {
+        id: timestamp,
+        darkOffsetMv: Number(pendingDarkOffset) || 0,
+        voltageMultiplierUmolPerMv: pendingCalibrationFactor,
+        referencePpfd: Number($("reference-ppfd").value) || 0,
+        date: timestamp
+      });
+      showMessage("calibration-message", result ? "Calibration saved to device." : "Unable to save calibration to device.", result ? "success" : "error");
+      if (result) {
+        pendingReferenceVoltage = null;
+        pendingDarkOffset = null;
+        pendingCalibrationFactor = null;
+        $("reference-reading").textContent = "Not measured";
+        $("dark-reading").textContent = "Not measured";
+        $("calibration-result").classList.add("hidden");
+        updateCalibrationWizard();
+        await loadConfig();
+      } else {
+        renderAll();
+      }
+    }
+
+    async function restoreCertificateCalibration() {
+      clearMessage("restore-message");
+      const result = await postJson("/api/calibration/restore", {});
+      showMessage("restore-message", result
+        ? "Certificate calibration restored. Saved field adjustments were kept."
+        : "Unable to restore certificate calibration on the device.", result ? "success" : "error");
+      if (result) await loadConfig();
+      else renderAll();
+    }
+
+    function openCalibrationConfirm(title, message, action) {
+      pendingCalibrationAction = action;
+      $("calibration-confirm-title").textContent = title;
+      $("calibration-confirm-message").textContent = message;
+      $("calibration-confirm-modal").classList.remove("hidden");
+      $("confirm-calibration-btn").focus();
+    }
+
+    function closeCalibrationConfirm() {
+      pendingCalibrationAction = null;
+      $("calibration-confirm-modal").classList.add("hidden");
+    }
+
+    async function confirmCalibrationAction() {
+      const action = pendingCalibrationAction;
+      closeCalibrationConfirm();
+      if (action) await action();
+    }
+
+    async function useFieldAdjustment(id) {
+      clearMessage("restore-message");
+      const result = await postJson("/api/calibration/use", { id });
+      showMessage("restore-message", result ? "Field adjustment activated." : "Unable to activate that field adjustment.", result ? "success" : "error");
+      if (result) await loadConfig();
+    }
+
+    async function deleteFieldAdjustment(id) {
+      clearMessage("restore-message");
+      const result = await postJson("/api/calibration/delete", { id });
+      showMessage("restore-message", result ? "Field adjustment deleted." : "Unable to delete that field adjustment.", result ? "success" : "error");
+      if (result) await loadConfig();
+    }
+
+    async function deleteAllFieldAdjustments() {
+      clearMessage("restore-message");
+      const result = await postJson("/api/calibration/delete-all", {});
+      showMessage("restore-message", result
+        ? "All field adjustments deleted. Certificate calibration restored."
+        : "Unable to delete the field adjustments.", result ? "success" : "error");
+      if (result) await loadConfig();
+    }
+
+    document.querySelectorAll(".nav-btn").forEach((button) => button.addEventListener("click", () => switchTab(button.dataset.tab)));
+    $("measure-dark-btn").addEventListener("click", measureDark);
+    $("measure-reference-btn").addEventListener("click", measureReference);
+    $("calculate-calibration-btn").addEventListener("click", calculateCalibration);
+    $("save-calibration-btn").addEventListener("click", saveCalibration);
+    $("restore-certificate-btn").addEventListener("click", restoreCertificateCalibration);
+    $("field-adjustments-list").addEventListener("click", (event) => {
+      const button = event.target.closest("button[data-adjustment-action]");
+      if (!button) return;
+      const id = button.dataset.adjustmentId;
+      if (button.dataset.adjustmentAction === "use") {
+        useFieldAdjustment(id);
+      } else {
+        openCalibrationConfirm("Delete field adjustment", "Delete this saved field adjustment?", () => deleteFieldAdjustment(id));
+      }
+    });
+    $("delete-all-adjustments-btn").addEventListener("click", () => {
+      const count = getFieldAdjustments().length;
+      if (count === 0) return;
+      openCalibrationConfirm("Delete all field adjustments", "Delete all " + count + " saved field adjustments and restore the certificate calibration?", deleteAllFieldAdjustments);
+    });
+    $("shunt-ohms").addEventListener("input", updateDerivedVoltageFactor);
+    $("multiplier").addEventListener("input", updateDerivedVoltageFactor);
+    $("save-settings-btn").addEventListener("click", saveSettings);
+    $("reboot-btn").addEventListener("click", openRebootModal);
+    $("cancel-reboot-btn").addEventListener("click", closeRebootModal);
+    $("confirm-reboot-btn").addEventListener("click", rebootDevice);
+    $("cancel-calibration-confirm-btn").addEventListener("click", closeCalibrationConfirm);
+    $("confirm-calibration-btn").addEventListener("click", confirmCalibrationAction);
+    $("reboot-modal").addEventListener("click", (event) => {
+      if (event.target === $("reboot-modal")) closeRebootModal();
+    });
+    $("calibration-confirm-modal").addEventListener("click", (event) => {
+      if (event.target === $("calibration-confirm-modal")) closeCalibrationConfirm();
+    });
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape" && !$("reboot-modal").classList.contains("hidden")) closeRebootModal();
+      if (event.key === "Escape" && !$("calibration-confirm-modal").classList.contains("hidden")) closeCalibrationConfirm();
+    });
+
+    window.addEventListener("load", async () => {
+      await loadConfig();
+      const lastTab = localStorage.getItem("licor-last-tab");
+      if (lastTab) switchTab(lastTab);
+      setInterval(readLiveStatus, 1000);
+    });
+  </script>
+</body>
+</html>

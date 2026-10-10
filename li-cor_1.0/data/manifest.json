@@ -1,0 +1,17 @@
+{
+  "name": "LI-COR LI-190SA",
+  "short_name": "LI-COR",
+  "description": "LI-COR LI-190SA quantum sensor dashboard",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#102c52",
+  "theme_color": "#000000",
+  "icons": [
+    {
+      "src": "favicon.png",
+      "sizes": "120x120",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}
